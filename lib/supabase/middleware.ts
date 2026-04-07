@@ -45,10 +45,25 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith('/forgot-password') &&
     request.nextUrl.pathname !== '/'
   ) {
-    // no user, potentially redirect to login page
+    // no user, potentially redirect to home page
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = '/'
     return NextResponse.redirect(url)
+  }
+
+  // Set Cache-Control headers for protected routes to prevent bfcache issues (back button post-logout)
+  if (
+    user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/register') &&
+    !request.nextUrl.pathname.startsWith('/auth') &&
+    !request.nextUrl.pathname.startsWith('/activate-account') &&
+    !request.nextUrl.pathname.startsWith('/forgot-password') &&
+    request.nextUrl.pathname !== '/'
+  ) {
+    supabaseResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0, proxy-revalidate')
+    supabaseResponse.headers.set('Pragma', 'no-cache')
+    supabaseResponse.headers.set('Expires', '0')
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as is. If you're creating a

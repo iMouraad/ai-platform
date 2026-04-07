@@ -1,10 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { PrivateNavbar } from "./private-navbar";
 
 export const PublicNavbar = async () => {
   const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
   const isAuthenticated = !!session;
+
+  if (isAuthenticated) {
+    return <PrivateNavbar />;
+  }
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] px-4 pt-4">
@@ -20,26 +25,15 @@ export const PublicNavbar = async () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            {isAuthenticated ? (
-              <Link 
-                href="/dashboard" 
-                className="px-4 md:px-6 py-2 md:py-2.5 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] rounded-xl hover:bg-blue-600 dark:hover:bg-blue-600 transition-all active:scale-95"
-              >
-                Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link href="/login" className="px-2 md:px-4 py-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-                  Ingresar
-                </Link>
-                <Link 
-                  href="/register" 
-                  className="px-4 md:px-7 py-2 md:py-2.5 text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 active:scale-95"
-                >
-                  Registrarse
-                </Link>
-              </>
-            )}
+            <Link href="/login" className="px-2 md:px-4 py-2 text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
+              Ingresar
+            </Link>
+            <Link
+              href="/register"
+              className="px-4 md:px-7 py-2 md:py-2.5 text-[9px] md:text-[10px] font-black uppercase tracking-[0.15em] bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 active:scale-95"
+            >
+              Registrarse
+            </Link>
           </div>
         </div>
       </header>

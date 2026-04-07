@@ -101,6 +101,7 @@ export const UserAccountDropdown = ({ user, role }: UserAccountDropdownProps) =>
             <form action={signOut}>
               <button
                 type="submit"
+                onClick={() => localStorage.setItem('ai_platform_logout_signal', '1')}
                 className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
