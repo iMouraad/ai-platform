@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -14,16 +14,16 @@ const STORAGE_KEY = "ai_platform_last_activity";
 const LOGOUT_SIGNAL = "ai_platform_logout_signal";
 
 const PUBLIC_ROUTES = [
-  '/login',
-  '/register',
-  '/auth',
-  '/activate-account',
-  '/forgot-password'
+  "/login",
+  "/register",
+  "/auth",
+  "/activate-account",
+  "/forgot-password",
 ];
 
 const isProtectedRoute = (path: string) => {
-  if (path === '/') return false;
-  return !PUBLIC_ROUTES.some(route => path.startsWith(route));
+  if (path === "/") return false;
+  return !PUBLIC_ROUTES.some((route) => path.startsWith(route));
 };
 
 // Evita advertencias de SSR en NextJS al usar useLayoutEffect
@@ -35,164 +35,163 @@ export const SessionTracker = ({ isAuthenticated }: SessionTrackerProps) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  // 1. Escudo bloqueador ANTES del repintado (Paint): si Next.js intenta retroceder
-  // aplicando su memoria caché (Router Cache), interceptamos el render antes de que 
-  // aparezca visualmente gracias a useLayoutEffect.
+  // 1. Escudo bloqueador ANTES del repintado (Paint):
+  // Si Next.js intenta navegar usando su caché interna (Router Cache), 
+  // interceptamos el render antes de que aparezca visualmente.
   useIsomorphicLayoutEffect(() => {
-    if (localStorage.getItem(LOGOUT_SIGNAL) && isProtectedRoute(pathname)) {
-      document.body.style.display = 'none'; // Pantalla negra antes de existir el fantasma
+    const isLoggedOut = localStorage.getItem(LOGOUT_SIGNAL);
+    if (isLoggedOut && isProtectedRoute(pathname)) {
+      console.log("[SessionTracker] Blocking render: Session already expired");
+      document.body.style.display = 'none';
       window.location.href = '/';
     }
   }, [pathname]);
 
   useEffect(() => {
-    // 2. Blindaje de montaje primario
+    const channel = new BroadcastChannel('ai_platform_session');
+
+    // Fuente de verdad: Si ya hay señal de cierre, fuera.
     if (localStorage.getItem(LOGOUT_SIGNAL) && isProtectedRoute(window.location.pathname)) {
-      document.body.style.display = 'none';
-      window.location.href = '/';
+      window.location.replace('/');
       return;
     }
 
-    const channel = new BroadcastChannel('ai_platform_session');
-
     const forceRedirectToHome = () => {
-      if (isProtectedRoute(window.location.pathname)) {
+      const path = window.location.pathname;
+      if (isProtectedRoute(path)) {
+        console.log("[SessionTracker] Redirecting to home...");
         window.location.replace('/');
-      } else if (window.location.pathname === '/') {
-        window.location.reload();
       }
     };
 
-    // 3. Fuente de verdad estricta de Autenticación
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || (event === "INITIAL_SESSION" && !session && isAuthenticated)) {
-        localStorage.setItem(LOGOUT_SIGNAL, '1');
+    const performLogout = async (reason: string) => {
+      if (isLoggingOut.current) return;
+      
+      console.log(`[SessionTracker] LOGOUT TRIGGERED: ${reason}`);
+      isLoggingOut.current = true;
+      
+      localStorage.setItem(LOGOUT_SIGNAL, Date.now().toString());
+      localStorage.removeItem(STORAGE_KEY);
+      channel.postMessage('FORCE_LOGOUT');
+
+      // Invalidamos la caché de Next.js
+      router.refresh();
+
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.error("SignOut error:", e);
+      } finally {
         forceRedirectToHome();
+      }
+    };
+
+    // 2. Listener de Supabase: La autoridad máxima
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" || (event === "INITIAL_SESSION" && !session && isAuthenticated)) {
+        // Solo marcamos logout si estábamos protegidos o autenticados
+        if (isProtectedRoute(window.location.pathname) || isAuthenticated) {
+          localStorage.setItem(LOGOUT_SIGNAL, '1');
+          forceRedirectToHome();
+        }
       } else if (event === "SIGNED_IN" || (event === "INITIAL_SESSION" && session)) {
-        // Solo aquí (verificación REAL en el servidor de Supabase) podemos confiar en que la 
-        // sesión está activa. ¡Nunca confiar en el 'isAuthenticated' cacheado en la memoria SPA 
-        // para destrabar el candado de logsout!
         localStorage.removeItem(LOGOUT_SIGNAL);
       }
     });
 
-    // Control BFCache nativo de hardware
-    const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted && localStorage.getItem(LOGOUT_SIGNAL)) {
-        forceRedirectToHome();
-      }
-    };
-    window.addEventListener("pageshow", handlePageShow);
-
-    // Control History API para SPA
-    const handlePopState = () => {
-      if (localStorage.getItem(LOGOUT_SIGNAL)) {
-        document.body.style.display = 'none';
-        forceRedirectToHome();
-      }
-    };
-    window.addEventListener("popstate", handlePopState);
-
-    // Detección inter-pestañas confiable pasiva
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === LOGOUT_SIGNAL && event.newValue === '1') {
-        forceRedirectToHome();
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    // Rescate para Memory Saver feature (Chrome/Edge hibernan la pestaña)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        if (localStorage.getItem(LOGOUT_SIGNAL)) {
-          forceRedirectToHome();
-          return;
-        }
-
-        if (isAuthenticated && !isLoggingOut.current) {
-          const lastActivityStr = localStorage.getItem(STORAGE_KEY);
-          if (lastActivityStr) {
-            const lastActivity = parseInt(lastActivityStr, 10);
-            if (Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS) {
-              performLogout();
-            }
-          }
-        }
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    const performLogout = async () => {
-      if (isLoggingOut.current) return;
-      isLoggingOut.current = true;
-      localStorage.setItem(LOGOUT_SIGNAL, '1');
-      localStorage.removeItem(STORAGE_KEY);
-      channel.postMessage('FORCE_LOGOUT');
-      
-      // Destruimos la caché de enrutamiento interno
-      router.refresh();
-
-      await supabase.auth.signOut();
-      forceRedirectToHome();
-    };
-
-    const updateActivityInfo = () => {
+    // 3. Control de Inactividad
+    const updateActivity = () => {
       if (!isLoggingOut.current) {
         localStorage.setItem(STORAGE_KEY, Date.now().toString());
       }
     };
 
-    updateActivityInfo();
+    // Solo inicializamos actividad si estamos autenticados y no hay bloqueo
+    if (isAuthenticated && !localStorage.getItem(LOGOUT_SIGNAL)) {
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        updateActivity();
+      }
+    }
 
     const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart", "click"];
     let throttleTimer: NodeJS.Timeout | null = null;
+    
     const handleActivity = () => {
       if (throttleTimer) return;
       throttleTimer = setTimeout(() => {
-        updateActivityInfo();
+        updateActivity();
         throttleTimer = null;
-      }, 1000);
+      }, 1000); 
     };
-
-    events.forEach(event => {
-      window.addEventListener(event, handleActivity, { passive: true });
-    });
-
-    let checkInterval: NodeJS.Timeout | null = null;
 
     if (isAuthenticated) {
-      checkInterval = setInterval(async () => {
-        if (isLoggingOut.current) return;
-
-        if (localStorage.getItem(LOGOUT_SIGNAL)) {
-          forceRedirectToHome();
-          return;
-        }
-
-        const lastActivityStr = localStorage.getItem(STORAGE_KEY);
-        if (lastActivityStr) {
-          const lastActivity = parseInt(lastActivityStr, 10);
-          if (Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS) {
-            await performLogout();
-          }
-        }
-      }, 3000);
+      events.forEach(event => window.addEventListener(event, handleActivity, { passive: true }));
     }
 
-    return () => {
-      channel.close();
-      authListener.subscription.unsubscribe();
-      window.removeEventListener("pageshow", handlePageShow);
-      window.removeEventListener("popstate", handlePopState);
-      window.removeEventListener("storage", handleStorageChange);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      events.forEach(event => {
-        window.removeEventListener(event, handleActivity);
-      });
-      if (throttleTimer) clearTimeout(throttleTimer);
-      if (checkInterval) clearInterval(checkInterval);
+    // 4. Verificación proactiva (Intervalo y Eventos de ventana)
+    const checkSession = () => {
+      if (isLoggingOut.current) return;
+
+      if (localStorage.getItem(LOGOUT_SIGNAL)) {
+        forceRedirectToHome();
+        return;
+      }
+
+      const lastActivityStr = localStorage.getItem(STORAGE_KEY);
+      if (lastActivityStr && isAuthenticated) {
+        const lastActivity = parseInt(lastActivityStr, 10);
+        if (Date.now() - lastActivity >= INACTIVITY_TIMEOUT_MS) {
+          void performLogout("Inactivity threshold exceeded");
+        }
+      }
     };
-  }, [isAuthenticated, supabase]);
+
+    // Intervalo para cerrar automáticamente incluso sin interacción
+    const interval = setInterval(checkSession, 2000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkSession();
+      }
+    };
+
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        console.log("[SessionTracker] Restored from BFCache, checking session...");
+        checkSession();
+      }
+    };
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === LOGOUT_SIGNAL && e.newValue) {
+        forceRedirectToHome();
+      }
+    };
+
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data === "FORCE_LOGOUT") {
+        forceRedirectToHome();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("focus", checkSession);
+    channel.addEventListener("message", handleMessage);
+
+    return () => {
+      clearInterval(interval);
+      subscription.unsubscribe();
+      channel.close();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("focus", checkSession);
+      events.forEach(event => window.removeEventListener(event, handleActivity));
+      if (throttleTimer) clearTimeout(throttleTimer);
+    };
+  }, [isAuthenticated, supabase, router]);
 
   return null;
 };

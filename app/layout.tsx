@@ -1,6 +1,12 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { SessionTracker } from "@/components/providers/session-tracker";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -12,28 +18,28 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "AI Platform | Base Técnica",
-  description: "Plataforma de inteligencia artificial - Base técnica inicial con Next.js y Supabase.",
-};
+// Parche global para compatibilidad con Transformers.js / Turbopack
+if (typeof window !== 'undefined') {
+  if (!(window as any).process) (window as any).process = { env: {} };
+}
 
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { SessionTracker } from "@/components/providers/session-tracker";
-import { createClient } from "@/lib/supabase/server";
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  const supabase = await createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  const isAuthenticated = !!session;
+}) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+    });
+  }, [supabase]);
 
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
-      <body className="min-h-full bg-white dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 transition-colors duration-300">
+      <body suppressHydrationWarning className="min-h-full bg-white dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 transition-colors duration-300">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
