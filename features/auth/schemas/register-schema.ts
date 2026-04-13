@@ -12,7 +12,7 @@ export const registerSchema = z.object({
     .regex(/^[a-zA-Z\sñÑáéíóúÁÉÍÓÚ]+$/, "Solo se permiten letras y espacios"),
   secondLastName: z.string().optional().or(z.literal("")),
   documentType: z.enum(["dni", "passport", "cedula", "other"], {
-    errorMap: () => ({ message: "Selecciona un tipo de documento" }),
+    message: "Selecciona un tipo de documento",
   }),
   documentNumber: z.string()
     .min(5, "El número de documento es inválido")

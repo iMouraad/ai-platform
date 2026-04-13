@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, Database, Tags, Users } from "lucide-react";
+import { ArrowLeft, Database, Tags, Users, GraduationCap } from "lucide-react";
 import { clsx } from "clsx";
 
 export const AdminSidebar = () => {
@@ -18,6 +18,11 @@ export const AdminSidebar = () => {
       name: "Categorías",
       href: "/admin/categories",
       icon: <Tags className="w-4 h-4" />,
+    },
+    {
+      name: "Academia",
+      href: "/admin/academy",
+      icon: <GraduationCap className="w-4 h-4" />,
     },
     {
       name: "Usuarios",
@@ -86,4 +91,3 @@ export const AdminSidebar = () => {
     </aside>
   );
 };
-
