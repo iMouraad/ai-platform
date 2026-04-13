@@ -9,12 +9,12 @@ export async function activateAccount(token: string, data: ActivatePasswordData)
   const validatedFields = activatePasswordSchema.safeParse(data);
   if (!validatedFields.success) throw new Error("Datos de contraseña inválidos");
 
-  const supabase = await createClient();
+  // Use Admin Client for EVERYTHING to bypass RLS during this critical phase
   const adminSupabase = await createAdminClient();
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
-  // 2. Find pending registration
-  const { data: pending, error: findError } = await supabase
+  // 2. Find pending registration (Using Admin)
+  const { data: pending, error: findError } = await adminSupabase
     .schema("accounts")
     .from("pending_registrations")
     .select("*")
@@ -25,7 +25,9 @@ export async function activateAccount(token: string, data: ActivatePasswordData)
   if (pending.status === "used") throw new Error("Este enlace ya ha sido utilizado.");
   if (new Date(pending.expires_at) < new Date()) throw new Error("El enlace ha expirado.");
 
-  // 3. Create User in Supabase Auth (Using Admin Client)
+  let userId: string;
+
+  // 3. Create or Update User in Supabase Auth
   const { data: authUser, error: authError } = await adminSupabase.auth.admin.createUser({
     email: pending.email,
     password: data.password,
@@ -36,15 +38,29 @@ export async function activateAccount(token: string, data: ActivatePasswordData)
     },
   });
 
-  if (authError) throw new Error(authError.message);
+  if (authError) {
+    // If user already exists in Auth but activation failed before, let's try to get the existing ID
+    if (authError.message.includes("already been registered")) {
+      const { data: existingUser } = await adminSupabase.auth.admin.listUsers();
+      const user = existingUser.users.find(u => u.email === pending.email);
+      if (!user) throw new Error("Error crítico: El usuario existe pero no se pudo recuperar.");
+      userId = user.id;
+      
+      // Also update password anyway to be sure it's the one the user just set
+      await adminSupabase.auth.admin.updateUserById(userId, { password: data.password });
+    } else {
+      throw new Error(authError.message);
+    }
+  } else {
+    userId = authUser.user.id;
+  }
 
-  // 4. Create Profile
-  const { error: profileError } = await supabase
+  // 4. Create Profile (Using Admin - This bypasses RLS)
+  const { error: profileError } = await adminSupabase
     .schema("accounts")
     .from("profiles")
-    .insert({
-      id: crypto.randomUUID(),
-      auth_user_id: authUser.user.id,
+    .upsert({
+      auth_user_id: userId,
       first_name: pending.first_name,
       middle_name: pending.middle_name,
       last_name: pending.last_name,
@@ -59,24 +75,27 @@ export async function activateAccount(token: string, data: ActivatePasswordData)
       role: "student",
       is_active: true,
       is_verified: true,
-    });
+    }, { onConflict: 'auth_user_id' });
 
-  if (profileError) throw new Error(profileError.message);
+  if (profileError) throw new Error("Error al crear perfil: " + profileError.message);
 
-  // 5. Update Registry & Audit
-  await supabase
+  // 5. Update Registry & Audit (Using Admin)
+  await adminSupabase
     .schema("accounts")
     .from("username_registry")
-    .insert({
+    .upsert({
       username: pending.generated_username,
-    });
+    }, { onConflict: 'username' });
 
-  await supabase
+  // 6. DEACTIVATE TOKEN IMMEDIATELY
+  const { error: updateError } = await adminSupabase
     .schema("accounts")
     .from("pending_registrations")
     .update({ status: "used" })
     .eq("id", pending.id);
 
-  // 6. Final success
+  if (updateError) console.error("Warning: Could not mark token as used", updateError);
+
+  // Final success
   return { success: true };
 }

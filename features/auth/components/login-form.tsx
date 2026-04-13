@@ -41,6 +41,16 @@ export const LoginForm = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  };
+
   return (
     <div className="mx-auto flex w-full flex-col justify-center space-y-12 max-w-[400px]">
       <div className="flex flex-col space-y-3 text-center">
@@ -122,6 +132,7 @@ export const LoginForm = () => {
 
         <button 
           type="button"
+          onClick={handleGoogleLogin}
           className="w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all flex items-center justify-center gap-4 group"
         >
           <svg className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">

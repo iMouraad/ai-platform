@@ -17,6 +17,11 @@ export const CreateCategoryForm = () => {
     formState: { errors },
   } = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      is_active: true,
+    },
   });
 
   const onSubmit = async (data: CategoryFormData) => {

@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SessionTracker } from "@/components/providers/session-tracker";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,9 +33,19 @@ export default function RootLayout({
   const supabase = createClient();
 
   useEffect(() => {
+    // 1. Revisión inicial de sesión
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
     });
+
+    // 2. Escuchar cambios de estado en tiempo real (Sincronización Total)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [supabase]);
 
   return (
@@ -51,6 +62,7 @@ export default function RootLayout({
             {children}
           </div>
           <ThemeToggle />
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
     </html>

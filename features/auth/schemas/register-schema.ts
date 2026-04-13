@@ -12,14 +12,14 @@ export const registerSchema = z.object({
     .regex(/^[a-zA-Z\sñÑáéíóúÁÉÍÓÚ]+$/, "Solo se permiten letras y espacios"),
   secondLastName: z.string().optional().or(z.literal("")),
   documentType: z.enum(["dni", "passport", "cedula", "other"], {
-    errorMap: () => ({ message: "Selecciona un tipo de documento" }),
+    message: "Selecciona un tipo de documento",
   }),
   documentNumber: z.string()
     .min(5, "El número de documento es inválido")
     .max(20, "El número de documento es muy largo")
     .regex(/^[a-zA-Z0-9]+$/, "Solo se permiten letras y números"),
-  countryCode: z.string().min(2, "Selecciona tu país"),
   email: z.string().email("Introduce un correo electrónico válido"),
+  countryCode: z.string().default("EC"),
 });
 
 export type RegisterData = z.infer<typeof registerSchema>;

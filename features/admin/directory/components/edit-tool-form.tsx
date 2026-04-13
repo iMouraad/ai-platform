@@ -25,7 +25,6 @@ export const EditToolForm = ({
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm<ToolFormData>({
     resolver: zodResolver(toolSchema),
     defaultValues: {
@@ -34,7 +33,15 @@ export const EditToolForm = ({
       short_description: tool.short_description,
       category_id: tool.category_id,
       logo_url: tool.logo_url || "",
+      video_url: tool.video_url || "",
+      content: tool.content || "",
+      pricing: tool.pricing || "",
+      target_audience: tool.target_audience || "",
+      pros: tool.pros?.join(", ") || "",
+      features: tool.features?.join(", ") || "",
+      suggested_prompts: tool.suggested_prompts?.join(", ") || "",
       is_active: !!tool.is_active,
+      is_verified: !!tool.is_verified,
     },
   });
 
@@ -59,7 +66,15 @@ export const EditToolForm = ({
     formData.append("short_description", data.short_description);
     formData.append("category_id", data.category_id);
     formData.append("is_active", String(data.is_active));
+    formData.append("is_verified", String(data.is_verified));
     formData.append("logo_url", data.logo_url || "");
+    formData.append("video_url", data.video_url || "");
+    formData.append("content", data.content || "");
+    formData.append("pricing", data.pricing || "");
+    formData.append("target_audience", data.target_audience || "");
+    formData.append("pros", data.pros || "");
+    formData.append("features", data.features || "");
+    formData.append("suggested_prompts", data.suggested_prompts || "");
 
     if (fileInputRef.current?.files?.[0]) {
       formData.append("logo_file", fileInputRef.current.files[0]);
@@ -98,7 +113,7 @@ export const EditToolForm = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto px-1 no-scrollbar pb-8">
         <div className="space-y-2">
           <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Nombre</label>
           <input {...register("name")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
@@ -113,20 +128,72 @@ export const EditToolForm = ({
 
         <div className="md:col-span-2 space-y-2">
           <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Descripción Corta</label>
-          <textarea {...register("short_description")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm min-h-[120px]" />
+          <textarea {...register("short_description")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm min-h-[100px]" />
           {errors.short_description && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">{errors.short_description.message}</p>}
         </div>
 
         <div className="space-y-2">
           <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Categoría</label>
-          <select {...register("category_id")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm appearance-none">
+          <select {...register("category_id")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm appearance-none text-zinc-900 dark:text-white">
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
 
-        <div className="flex items-center gap-3 mt-8 ml-1">
-          <input type="checkbox" {...register("is_active")} id="is_active_tool" className="h-5 w-5 rounded-lg border-zinc-300 text-blue-600 focus:ring-blue-600/20" />
-          <label htmlFor="is_active_tool" className="text-xs font-black text-zinc-500 uppercase tracking-widest cursor-pointer leading-none">Herramienta Activa</label>
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Plan de Precios</label>
+          <input {...register("pricing")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Público Objetivo</label>
+          <input {...register("target_audience")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
+        </div>
+
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            Fortalezas <span className="opacity-40 text-[8px] lowercase">(separadas por coma)</span>
+          </label>
+          <input {...register("pros")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
+        </div>
+
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            Características <span className="opacity-40 text-[8px] lowercase">(separadas por coma)</span>
+          </label>
+          <input {...register("features")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
+        </div>
+
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            Prompts Sugeridos <span className="opacity-40 text-[8px] lowercase">(separados por coma)</span>
+          </label>
+          <input {...register("suggested_prompts")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Video Demo URL</label>
+          <input {...register("video_url")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">URL Logo Alt</label>
+          <input {...register("logo_url")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm" />
+        </div>
+
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Descripción Detallada (Markdown)</label>
+          <textarea {...register("content")} className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm min-h-[150px]" />
+        </div>
+
+        <div className="flex flex-wrap gap-4 md:col-span-2">
+          <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <input type="checkbox" {...register("is_active")} id="is_active_edit" className="h-5 w-5 rounded-lg border-zinc-300 text-green-600 focus:ring-green-600/20" />
+            <label htmlFor="is_active_edit" className="text-[10px] font-black text-zinc-500 uppercase tracking-widest cursor-pointer leading-none">Activa</label>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
+            <input type="checkbox" {...register("is_verified")} id="is_verified_edit" className="h-5 w-5 rounded-lg border-zinc-300 text-blue-600 focus:ring-blue-600/20" />
+            <label htmlFor="is_verified_edit" className="text-[10px] font-black text-zinc-500 uppercase tracking-widest cursor-pointer leading-none">Verificada</label>
+          </div>
         </div>
       </div>
 
