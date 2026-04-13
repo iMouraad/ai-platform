@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { activatePasswordSchema, type ActivatePasswordData } from "../schemas/activate-password-schema";
 import { activateAccount } from "../actions/activate-account";
-import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -91,7 +91,7 @@ export const ActivateAccountForm = () => {
       <div className="flex flex-col space-y-2 text-center mb-10">
         <h1 className="text-4xl font-black font-outfit tracking-tighter text-zinc-900 dark:text-zinc-50 uppercase leading-none">Último Paso</h1>
         <p className="text-zinc-500 dark:text-zinc-400 font-bold text-xs uppercase tracking-widest">
-          Estás a punto de dominar la IA
+          Crea tu acceso de seguridad
         </p>
       </div>
 
@@ -105,8 +105,9 @@ export const ActivateAccountForm = () => {
                   {...register("password")}
                   type={showPassword ? "text" : "password"}
                   placeholder="Mínimo 8 caracteres"
-                  className={`w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border ${errors.password ? 'border-red-500/50' : 'border-zinc-200 dark:border-zinc-800'} focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm`}
+                  className={`w-full pl-12 pr-14 py-5 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border ${errors.password ? 'border-red-500/50' : 'border-zinc-200 dark:border-zinc-800'} focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-bold text-sm`}
                 />
+                <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400 group-focus-within:text-blue-600 transition-colors" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -115,19 +116,12 @@ export const ActivateAccountForm = () => {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {errors.password && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1 mt-1">{errors.password.message}</p>}
             </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Confirma tu Password</label>
-              <input
-                {...register("confirmPassword")}
-                type="password"
-                placeholder="Repite tu contraseña"
-                className={`w-full px-5 py-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border ${errors.confirmPassword ? 'border-red-500/50' : 'border-zinc-200 dark:border-zinc-800'} focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm`}
-              />
-              {errors.confirmPassword && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">{errors.confirmPassword.message}</p>}
-            </div>
+            
+            <p className="text-[10px] text-zinc-400 font-medium px-2 leading-relaxed">
+              * Asegúrate de elegir una contraseña segura que puedas recordar. No compartas tu acceso con nadie.
+            </p>
           </div>
 
           {error && (
@@ -140,13 +134,16 @@ export const ActivateAccountForm = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-5 bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-xs rounded-2xl shadow-xl shadow-blue-600/30 hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="group relative w-full inline-flex items-center justify-center p-0.5 rounded-2xl overflow-hidden font-black text-xs uppercase tracking-[0.25em] transition-all active:scale-95 shadow-xl shadow-blue-600/30"
           >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              "Activar Acceso"
-            )}
+            <span className="absolute inset-0 bg-blue-600 group-hover:bg-blue-700 transition-colors" />
+            <span className="relative w-full py-5 bg-zinc-900 dark:bg-zinc-950 text-white group-hover:bg-transparent transition-all rounded-[0.9rem] flex items-center justify-center gap-3">
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                "Activar Acceso"
+              )}
+            </span>
           </button>
         </form>
       </div>
