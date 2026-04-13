@@ -14,11 +14,6 @@ export const Hero = ({ isAuthenticated = false }: { isAuthenticated?: boolean })
       </div>
 
       <div className="container mx-auto px-6 text-center">
-        {!isAuthenticated && (
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600/10 text-blue-600 text-[10px] font-bold uppercase tracking-widest border border-blue-600/20 mb-8 animate-in fade-in slide-in-from-bottom-4">
-            EL FUTURO DE LA IA ESTÁ AQUÍ
-          </div>
-        )}
 
         <h1 className={`mx-auto max-w-5xl font-black font-outfit tracking-tighter text-zinc-900 dark:text-zinc-50 leading-[0.9] animate-in fade-in slide-in-from-bottom-8 duration-500 ${isAuthenticated ? 'text-5xl md:text-7xl mb-12' : 'text-5xl md:text-7xl lg:text-8xl mb-8'}`}>
           Domina la <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-400">Inteligencia Artificial</span> como un experto.
