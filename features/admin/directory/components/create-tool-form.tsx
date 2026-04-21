@@ -22,7 +22,15 @@ export const CreateToolForm = ({ categories }: { categories: Category[] }) => {
     resolver: zodResolver(toolSchema),
     defaultValues: {
       is_active: true,
+      is_verified: false,
       logo_url: "",
+      video_url: "",
+      content: "",
+      pricing: "",
+      target_audience: "",
+      pros: "",
+      features: "",
+      suggested_prompts: "",
     }
   });
 
@@ -47,7 +55,15 @@ export const CreateToolForm = ({ categories }: { categories: Category[] }) => {
     formData.append("short_description", data.short_description);
     formData.append("category_id", data.category_id);
     formData.append("is_active", String(data.is_active));
+    formData.append("is_verified", String(data.is_verified));
     formData.append("logo_url", data.logo_url || "");
+    formData.append("video_url", data.video_url || "");
+    formData.append("content", data.content || "");
+    formData.append("pricing", data.pricing || "");
+    formData.append("target_audience", data.target_audience || "");
+    formData.append("pros", data.pros || "");
+    formData.append("features", data.features || "");
+    formData.append("suggested_prompts", data.suggested_prompts || "");
 
     if (fileInputRef.current?.files?.[0]) {
       formData.append("logo_file", fileInputRef.current.files[0]);
@@ -120,26 +136,100 @@ export const CreateToolForm = ({ categories }: { categories: Category[] }) => {
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Categoría</label>
-          <select
-            {...register("category_id")}
-            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm appearance-none"
-          >
-            <option value="">Selecciona una...</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
-          {errors.category_id && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1">{errors.category_id.message}</p>}
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Plan de Precios</label>
+          <input
+            {...register("pricing")}
+            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm"
+            placeholder="Ej: Gratis, Freemium, $20/m"
+          />
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">URL Alternativa (Opcional)</label>
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Público Objetivo</label>
+          <input
+            {...register("target_audience")}
+            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm"
+            placeholder="Ej: Estudiantes, Programadores"
+          />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            Fortalezas <span className="text-[8px] opacity-50 lowercase tracking-normal">(separadas por coma)</span>
+          </label>
+          <input
+            {...register("pros")}
+            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm"
+            placeholder="Ej: Muy rápida, Interfaz limpia, Soporta PDF"
+          />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            Características Técnicas <span className="text-[8px] opacity-50 lowercase tracking-normal">(separadas por coma)</span>
+          </label>
+          <input
+            {...register("features")}
+            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm"
+            placeholder="Ej: Análisis de Datos, Generación de Imagen, API"
+          />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+            Prompts Sugeridos <span className="text-[8px] opacity-50 lowercase tracking-normal">(separados por coma)</span>
+          </label>
+          <input
+            {...register("suggested_prompts")}
+            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm"
+            placeholder="Ej: Hazme un resumen, Explícame esto..."
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">URL de Video/GIF (Demo)</label>
+          <input
+            {...register("video_url")}
+            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm"
+            placeholder="https://..."
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">URL Alternativa Logo</label>
           <input
             {...register("logo_url")}
             className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm"
             placeholder="https://..."
           />
+        </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest ml-1">Descripción Detallada (Markdown)</label>
+          <textarea
+            {...register("content")}
+            className="w-full px-5 py-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 outline-none transition-all font-medium text-sm min-h-[150px]"
+            placeholder="Escribe todo el detalle de la herramienta aquí..."
+          />
+        </div>
+
+        <div className="flex items-center gap-6 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-2xl border border-zinc-200 dark:border-zinc-800 md:col-span-2">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              {...register("is_verified")}
+              className="w-5 h-5 rounded-lg border-zinc-300 text-blue-600 focus:ring-blue-600 bg-white"
+            />
+            <label className="text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Verificada por PDIA</label>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              {...register("is_active")}
+              className="w-5 h-5 rounded-lg border-zinc-300 text-green-600 focus:ring-green-600 bg-white"
+            />
+            <label className="text-xs font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Visible en Directorio</label>
+          </div>
         </div>
       </div>
 

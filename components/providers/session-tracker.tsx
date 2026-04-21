@@ -8,11 +8,10 @@ interface SessionTrackerProps {
   isAuthenticated: boolean;
 }
 
-// 10 segundos de prueba
-const INACTIVITY_TIMEOUT_MS = 10 * 1000;
+// CONFIGURACIÓN DE PRODUCCIÓN: 30 minutos de inactividad
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; 
 const STORAGE_KEY = "ai_platform_last_activity";
 const LOGOUT_SIGNAL = "ai_platform_logout_signal";
-const BROADCAST_CHANNEL = "ai_platform_session";
 
 const PUBLIC_ROUTES = [
   "/login",
@@ -23,13 +22,12 @@ const PUBLIC_ROUTES = [
 ];
 
 const isProtectedRoute = (path: string) => {
-  if (path === "/") return false;
+  if (path === "/" || path === "") return false;
   return !PUBLIC_ROUTES.some((route) => path.startsWith(route));
 };
 
 // Evita advertencias de SSR en NextJS al usar useLayoutEffect
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export const SessionTracker = ({ isAuthenticated }: SessionTrackerProps) => {
   const isLoggingOut = useRef(false);
@@ -37,116 +35,79 @@ export const SessionTracker = ({ isAuthenticated }: SessionTrackerProps) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  // 1. Escudo bloqueador ANTES del repintado (Paint):
-  // Interceptamos el render antes de que aparezca visualmente.
+  // 1. Escudo bloqueador antes del render (Paint)
   useIsomorphicLayoutEffect(() => {
-    if (localStorage.getItem(LOGOUT_SIGNAL) && isProtectedRoute(pathname)) {
-      console.log("[SessionTracker] Blocking render: Session already expired");
-      document.body.style.display = "none";
-      window.location.href = "/";
+    const isLoggedOut = localStorage.getItem(LOGOUT_SIGNAL);
+    // Solo bloqueamos si hay señal de cierre Y estamos en ruta protegida
+    if (isLoggedOut && isProtectedRoute(pathname)) {
+      console.log("[SessionTracker] Bloqueando render: Sesión expirada");
+      document.body.style.display = 'none';
+      window.location.href = '/';
     }
   }, [pathname]);
 
   useEffect(() => {
-    const channel = new BroadcastChannel(BROADCAST_CHANNEL);
+    const channel = new BroadcastChannel('ai_platform_session');
 
-    // Fuente de verdad: Si ya hay señal de cierre, fuera.
-    if (
-      localStorage.getItem(LOGOUT_SIGNAL) &&
-      isProtectedRoute(window.location.pathname)
-    ) {
-      window.location.replace("/");
-      return;
+    // SI ESTAMOS AUTENTICADOS, LIMPIAMOS LA SEÑAL DE CIERRE PREVIA
+    if (isAuthenticated) {
+      localStorage.removeItem(LOGOUT_SIGNAL);
     }
 
     const forceRedirectToHome = () => {
-      if (isProtectedRoute(window.location.pathname)) {
-        console.log("[SessionTracker] Redirecting to home...");
-        window.location.replace("/");
+      const path = window.location.pathname;
+      if (isProtectedRoute(path)) {
+        console.log("[SessionTracker] Redirigiendo al home por inactividad...");
+        window.location.replace('/');
       }
     };
 
     const performLogout = async (reason: string) => {
       if (isLoggingOut.current) return;
+      
+      console.log(`[SessionTracker] CERRANDO SESIÓN: ${reason}`);
       isLoggingOut.current = true;
-
-      console.log(`[SessionTracker] LOGOUT TRIGGERED: ${reason}`);
+      
       localStorage.setItem(LOGOUT_SIGNAL, Date.now().toString());
       localStorage.removeItem(STORAGE_KEY);
+      channel.postMessage('FORCE_LOGOUT');
 
-      // Notifica otras pestañas del mismo navegador
-      channel.postMessage("FORCE_LOGOUT");
-
-      // Invalida la caché de Next.js
-      router.refresh();
-
+      // Intentar cerrar sesión en Supabase
       try {
-        // scope:'global' invalida TODAS las sesiones en el servidor
-        // (incluye otros navegadores como Chrome/Firefox simultáneamente)
-        await supabase.auth.signOut({ scope: "global" });
+        await supabase.auth.signOut();
       } catch (e) {
-        console.error("SignOut error:", e);
+        console.error("Error al cerrar sesión en Supabase:", e);
       } finally {
         forceRedirectToHome();
+        router.refresh();
       }
     };
 
-    // 2. Listener de Supabase: autoridad máxima
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (
-        event === "SIGNED_OUT" ||
-        (event === "INITIAL_SESSION" && !session && isAuthenticated)
-      ) {
-        if (isProtectedRoute(window.location.pathname) || isAuthenticated) {
-          localStorage.setItem(LOGOUT_SIGNAL, "1");
-          forceRedirectToHome();
-        }
-      } else if (
-        event === "SIGNED_IN" ||
-        (event === "INITIAL_SESSION" && session)
-      ) {
-        localStorage.removeItem(LOGOUT_SIGNAL);
-      }
-    });
-
-    // 3. Control de inactividad
+    // 2. Control de Actividad con Throttle
     const updateActivity = () => {
-      if (!isLoggingOut.current) {
+      if (!isLoggingOut.current && isAuthenticated) {
         localStorage.setItem(STORAGE_KEY, Date.now().toString());
       }
     };
 
-    // FIX: Siempre resetear el timestamp al montar.
-    // Navegar o refrescar la página ES una acción del usuario.
-    // La lógica anterior solo inicializaba si no existía la clave, lo que
-    // causaba que el timer continuara desde una sesión previa al hacer refresh.
-    if (isAuthenticated && !localStorage.getItem(LOGOUT_SIGNAL)) {
-      updateActivity();
-    }
-
-    // FIX: Sin 'mousemove' — demasiado sensible a micro-movimientos involuntarios.
-    // Solo acciones deliberadas del usuario reinician el timer de inactividad.
-    const events = ["mousedown", "keydown", "scroll", "touchstart", "click"];
     let throttleTimer: NodeJS.Timeout | null = null;
-
     const handleActivity = () => {
       if (throttleTimer) return;
       throttleTimer = setTimeout(() => {
         updateActivity();
         throttleTimer = null;
-      }, 1000);
+      }, 2000); // Solo escribimos en localStorage cada 2 segundos máximo
     };
 
+    const events = ["mousedown", "keydown", "scroll", "touchstart", "click"];
+    
     if (isAuthenticated) {
-      events.forEach((event) =>
-        window.addEventListener(event, handleActivity, { passive: true })
-      );
+      events.forEach(event => window.addEventListener(event, handleActivity, { passive: true }));
+      updateActivity(); // Inicializar al entrar
     }
 
-    // Verificación de inactividad (sync, sin red) — usada por el intervalo
-    const checkInactivity = () => {
+    // 3. Verificación periódica (Vigilante)
+    const checkSession = () => {
       if (isLoggingOut.current || !isAuthenticated) return;
 
       if (localStorage.getItem(LOGOUT_SIGNAL)) {
@@ -156,115 +117,50 @@ export const SessionTracker = ({ isAuthenticated }: SessionTrackerProps) => {
 
       const lastActivityStr = localStorage.getItem(STORAGE_KEY);
       if (lastActivityStr) {
-        const elapsed = Date.now() - parseInt(lastActivityStr, 10);
-        if (elapsed >= INACTIVITY_TIMEOUT_MS) {
-          void performLogout("Inactivity timeout");
+        const lastActivity = parseInt(lastActivityStr, 10);
+        const diff = Date.now() - lastActivity;
+
+        if (diff >= INACTIVITY_TIMEOUT_MS) {
+          void performLogout("Inactividad prolongada");
         }
       }
     };
 
-    // Verificación completa (async, con red) — usada al recuperar foco/visibilidad.
-    // Detecta logout cross-browser: valida la sesión directamente contra Supabase.
-    // Si Firefox cerró la sesión con scope:'global', getUser() devuelve error en Chrome.
-    const checkSessionOnFocus = async () => {
-      if (isLoggingOut.current || !isAuthenticated) return;
+    const interval = setInterval(checkSession, 5000); // Revisar cada 5 segundos
 
-      if (localStorage.getItem(LOGOUT_SIGNAL)) {
-        forceRedirectToHome();
-        return;
-      }
-
-      // Primero verifica inactividad local (sin red)
-      const lastActivityStr = localStorage.getItem(STORAGE_KEY);
-      if (lastActivityStr) {
-        const elapsed = Date.now() - parseInt(lastActivityStr, 10);
-        if (elapsed >= INACTIVITY_TIMEOUT_MS) {
-          await performLogout("Inactivity timeout (on focus)");
-          return;
-        }
-      }
-
-      // Luego valida contra el servidor de Supabase.
-      // getUser() siempre hace una petición al servidor (a diferencia de getSession()).
-      const { error } = await supabase.auth.getUser();
-      if (error) {
-        await performLogout("Session invalidated on server");
-      }
-    };
-
-    // 4. Intervalo local: cubre el caso del usuario en la misma pestaña sin interactuar.
-    // También actúa como fallback para múltiples pestañas del mismo sitio
-    // (localStorage es compartido, la pestaña activa actualiza el timestamp para todas).
-    const interval = setInterval(checkInactivity, 2000);
-
-    // Al recuperar visibilidad: cubre el caso de otra pestaña/otra app.
-    // Los navegadores throttlean setInterval en pestañas ocultas, por eso
-    // es crítico verificar aquí el tiempo transcurrido real.
+    // 4. Sincronización entre Pestañas y Visibilidad
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        void checkSessionOnFocus();
-      }
+      if (document.visibilityState === 'visible') checkSession();
     };
 
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (!e.persisted) return;
-
-      console.log("[SessionTracker] Restored from BFCache");
-
-      // Solo aplica en rutas protegidas
-      if (!isProtectedRoute(window.location.pathname)) return;
-
-      // Si el logout estaba en curso cuando la página fue congelada, o ya hay señal:
-      // redirigir de inmediato sin mostrar nada (sin flash).
-      if (isLoggingOut.current || localStorage.getItem(LOGOUT_SIGNAL)) {
-        document.body.style.display = "none";
-        window.location.replace("/");
-        return;
-      }
-
-      // El ref puede estar obsoleto al restaurar del BFCache — resetear.
-      isLoggingOut.current = false;
-
-      // Ocultar contenido ANTES de la validación async para eliminar el flash.
-      // Se restaura solo si la sesión sigue siendo válida.
-      document.body.style.visibility = "hidden";
-
-      checkSessionOnFocus().finally(() => {
-        if (!isLoggingOut.current) {
-          document.body.style.visibility = "visible";
-        }
-      });
-    };
-
-    // Sincronización entre pestañas del mismo navegador via localStorage
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === LOGOUT_SIGNAL && e.newValue) forceRedirectToHome();
     };
 
-    // Sincronización entre pestañas del mismo navegador via BroadcastChannel
     const handleMessage = (e: MessageEvent) => {
       if (e.data === "FORCE_LOGOUT") forceRedirectToHome();
     };
 
-    const handleFocus = () => void checkSessionOnFocus();
+    // 5. Escuchar cambios de autenticación externos
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        performLogout("Sesión terminada externamente");
+      }
+    });
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("pageshow", handlePageShow);
     window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("focus", handleFocus);
+    window.addEventListener("focus", checkSession);
     channel.addEventListener("message", handleMessage);
 
     return () => {
       clearInterval(interval);
       subscription.unsubscribe();
-      channel.close();
+      events.forEach(event => window.removeEventListener(event, handleActivity));
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pageshow", handlePageShow);
       window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("focus", handleFocus);
-      events.forEach((event) =>
-        window.removeEventListener(event, handleActivity)
-      );
+      window.removeEventListener("focus", checkSession);
+      channel.close();
       if (throttleTimer) clearTimeout(throttleTimer);
     };
   }, [isAuthenticated, supabase, router]);
