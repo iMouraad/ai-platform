@@ -39,6 +39,27 @@ export default function RootLayout({
 
   return (
     <html lang="es" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
+      {/* Script de seguridad: corre sincrónicamente antes de que React hidrate.
+          Bloquea el render si hay señal de logout activa en rutas protegidas.
+          Cubre race conditions durante hidratación y restauración de BFCache. */}
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+          (function(){
+            try {
+              if (!localStorage.getItem('ai_platform_logout_signal')) return;
+              var p = window.location.pathname;
+              if (p === '/') return;
+              var pub = ['/login','/register','/auth','/activate-account','/forgot-password'];
+              for (var i = 0; i < pub.length; i++) {
+                if (p.indexOf(pub[i]) === 0) return;
+              }
+              document.documentElement.style.visibility = 'hidden';
+              window.location.replace('/');
+            } catch(e) {}
+          })();
+        `}} />
+      </head>
       <body suppressHydrationWarning className="min-h-full bg-white dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-50 transition-colors duration-300">
         <ThemeProvider
           attribute="class"
