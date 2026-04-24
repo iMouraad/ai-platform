@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase/client";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import { Activity, UserActivityProgress } from "../types/academy.types";
 
-const supabase = createClient();
+const defaultSupabase = createBrowserClient();
 
 export const academyService = {
   // --- GESTIÓN DE ACTIVIDADES (ADMIN) ---
@@ -9,8 +9,8 @@ export const academyService = {
   /**
    * Obtener todas las actividades (para el admin, incluye borradores)
    */
-  async getAllActivities() {
-    const { data, error } = await supabase
+  async getAllActivities(supabaseClient = defaultSupabase) {
+    const { data, error } = await supabaseClient
       .from('academy_activities')
       .select('*')
       .order('order', { ascending: true });
@@ -25,8 +25,8 @@ export const academyService = {
   /**
    * Crear o actualizar una actividad (Upsert)
    */
-  async upsertActivity(activity: Partial<Activity>) {
-    const { data, error } = await supabase
+  async upsertActivity(activity: Partial<Activity>, supabaseClient = defaultSupabase) {
+    const { data, error } = await supabaseClient
       .from('academy_activities')
       .upsert({
         ...activity,
@@ -45,8 +45,8 @@ export const academyService = {
   /**
    * Eliminar una actividad
    */
-  async deleteActivity(id: string) {
-    const { error } = await supabase
+  async deleteActivity(id: string, supabaseClient = defaultSupabase) {
+    const { error } = await supabaseClient
       .from('academy_activities')
       .delete()
       .eq('id', id);
@@ -63,8 +63,8 @@ export const academyService = {
   /**
    * Obtener actividades publicadas (para alumnos)
    */
-  async getPublishedActivities() {
-    const { data, error } = await supabase
+  async getPublishedActivities(supabaseClient = defaultSupabase) {
+    const { data, error } = await supabaseClient
       .from('academy_activities')
       .select('*')
       .eq('status', 'published')
@@ -80,8 +80,8 @@ export const academyService = {
   /**
    * Guardar el progreso de un usuario en una actividad
    */
-  async saveUserProgress(progress: Partial<UserActivityProgress>) {
-    const { data, error } = await supabase
+  async saveUserProgress(progress: Partial<UserActivityProgress>, supabaseClient = defaultSupabase) {
+    const { data, error } = await supabaseClient
       .from('user_academy_progress')
       .upsert({
         ...progress,
@@ -100,8 +100,8 @@ export const academyService = {
   /**
    * Obtener el progreso del usuario actual
    */
-  async getUserProgress(userId: string) {
-    const { data, error } = await supabase
+  async getUserProgress(userId: string, supabaseClient = defaultSupabase) {
+    const { data, error } = await supabaseClient
       .from('user_academy_progress')
       .select('*')
       .eq('user_id', userId);

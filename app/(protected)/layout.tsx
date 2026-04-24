@@ -15,9 +15,9 @@ export default async function ProtectedLayout({
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
+    <div className="relative flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950" suppressHydrationWarning>
       <PrivateNavbar />
-      <main className="flex-1 flex flex-col pt-24 pb-8">{children}</main>
+      <main className="flex-1 flex flex-col pt-24 pb-8" suppressHydrationWarning>{children}</main>
     </div>
   );
 }

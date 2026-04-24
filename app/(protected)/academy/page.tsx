@@ -27,25 +27,6 @@ export default function AcademyPage() {
         {/* The Main Learning Roadmap */}
         <AcademyRoadmap />
 
-        {/* Bottom Banner - CTA for Certification */}
-        <div className="mt-32 p-10 md:p-16 bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-[3.5rem] shadow-2xl shadow-blue-600/20 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white opacity-10 blur-[100px] -translate-y-1/2 translate-x-1/2 rounded-full" />
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-            <div className="max-w-xl text-center md:text-left">
-              <h3 className="text-4xl md:text-5xl font-black font-outfit mb-6 tracking-tighter leading-none uppercase">
-                Obtén tu Certificación Profesional
-              </h3>
-              <p className="text-xl text-blue-100/80 font-medium leading-relaxed">
-                Al completar los 5 niveles de maestría, desbloquearás el examen final para obtener tu Certificado Oficial de PDIA con validez internacional.
-              </p>
-            </div>
-            <div className="shrink-0">
-               <div className="h-32 w-32 md:h-48 md:w-48 rounded-full border-8 border-white/20 bg-white/10 backdrop-blur-xl flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-700">
-                  <Trophy className="h-16 w-16 md:h-24 md:w-24 text-white" />
-               </div>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   );

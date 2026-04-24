@@ -1,27 +1,43 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { AdminUserTable } from "@/features/admin/users/components/admin-user-table";
 import { CreateUserModal } from "@/features/admin/users/components/create-user-modal";
 import { Profile } from "@/features/admin/users/types/user-management.types";
-import { User, ShieldCheck, Mail, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 export default async function AdminUsersPage() {
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
 
   // Fetch all profiles from accounts schema
-  const { data: profiles, error } = await supabase
-    .schema("accounts")
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
+  // Fetch all profiles and pending registrations to merge the correct document_number
+  const [profilesRes, pendingRes] = await Promise.all([
+    supabase.schema("accounts").from("profiles").select("*").order("created_at", { ascending: false }),
+    supabase.schema("accounts").from("pending_registrations").select("email, document_number, document_type")
+  ]);
 
-  if (error) {
-    console.error("Error fetching profiles:", error);
+  const profiles = profilesRes.data || [];
+  const pending = pendingRes.data || [];
+
+  // Merge: If a profile has a placeholder document_number, try to find the real one in pending_registrations
+  const mergedProfiles = profiles.map(profile => {
+    const pendingMatch = pending.find(p => p.email.toLowerCase() === profile.email.toLowerCase());
+    if (pendingMatch && (profile.document_number.includes('_') || profile.document_number === '0000000000' || !profile.document_number)) {
+      return {
+        ...profile,
+        document_number: pendingMatch.document_number,
+        document_type: pendingMatch.document_type
+      };
+    }
+    return profile;
+  });
+
+  if (profilesRes.error) {
+    console.error("Error fetching profiles:", profilesRes.error);
   }
 
   // Calculate stats
-  const totalUsers = profiles?.length || 0;
-  const admins = profiles?.filter(p => p.role === 'admin').length || 0;
-  const activeUsers = profiles?.filter(p => p.is_active).length || 0;
+  const totalUsers = mergedProfiles?.length || 0;
+  const admins = mergedProfiles?.filter(p => p.role === 'admin').length || 0;
+  const activeUsers = mergedProfiles?.filter(p => p.is_active).length || 0;
 
   return (
     <div className="space-y-12 max-w-7xl mx-auto px-6 py-12 md:py-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -63,7 +79,7 @@ export default async function AdminUsersPage() {
 
       <div className="relative">
         <div className="absolute -top-24 -right-24 h-96 w-96 bg-blue-600/5 blur-[120px] rounded-full -z-10" />
-        <AdminUserTable initialUsers={(profiles as Profile[]) || []} />
+        <AdminUserTable initialUsers={(mergedProfiles as Profile[]) || []} />
       </div>
 
       <div className="p-8 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-[3rem] flex flex-col md:flex-row items-center justify-between gap-8 mt-12 mb-20 shadow-2xl shadow-blue-600/10 border border-zinc-800 dark:border-zinc-100 relative overflow-hidden group">

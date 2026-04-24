@@ -5,9 +5,11 @@ export interface Profile {
   last_name: string;
   full_name: string;
   email: string;
-  role: 'student' | 'instructor' | 'admin';
+  role: 'student' | 'student_premium' | 'instructor' | 'admin';
   is_active: boolean;
   is_verified: boolean;
   created_at: string;
+  premium_at?: string | null;
   username: string;
+  document_number: string;
 }

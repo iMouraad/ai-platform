@@ -33,10 +33,11 @@ export const UserAccountDropdown = ({ user, role }: UserAccountDropdownProps) =>
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef} suppressHydrationWarning>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-3 p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all duration-200 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-700 group focus:outline-none"
+        suppressHydrationWarning
       >
         <div className="hidden md:flex flex-col items-end px-1">
           <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate max-w-[120px]">

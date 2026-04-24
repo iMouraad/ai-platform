@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS accounts.profiles (
     current_level INTEGER DEFAULT 1,
     is_active BOOLEAN DEFAULT TRUE,
     is_verified BOOLEAN DEFAULT TRUE,
+    premium_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

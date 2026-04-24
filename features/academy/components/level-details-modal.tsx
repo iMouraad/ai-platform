@@ -12,15 +12,16 @@ import {
   Zap,
   ChevronRight
 } from "lucide-react";
-import { AcademyLevel, Activity } from "../types/academy.types";
+import { AcademyLevel, Activity, UserActivityProgress } from "../types/academy.types";
 
 interface LevelDetailsModalProps {
   level: AcademyLevel;
+  userProgress: UserActivityProgress[];
   onClose: () => void;
   onStartActivity: (activity: Activity) => void;
 }
 
-export const LevelDetailsModal = ({ level, onClose, onStartActivity }: LevelDetailsModalProps) => {
+export const LevelDetailsModal = ({ level, userProgress, onClose, onStartActivity }: LevelDetailsModalProps) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
       <motion.div 
@@ -83,8 +84,20 @@ export const LevelDetailsModal = ({ level, onClose, onStartActivity }: LevelDeta
                   <div className="text-left">
                      <div className="flex items-center gap-2 mb-1">
                         <span className="text-[8px] font-black uppercase tracking-[0.2em] text-blue-600">RETO INTERACTIVO</span>
-                        {activity.video_url && <span className="h-1 w-1 rounded-full bg-blue-600" />}
-                        {activity.video_url && <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">INCLUYE VIDEO GUÍA</span>}
+                        <div className="flex items-center gap-3">
+                           {userProgress.some(p => p.activity_id === activity.id) && (
+                              <div className="flex items-center gap-1 text-green-500">
+                                 <CheckCircle2 className="h-2.5 w-2.5" />
+                                 <span className="text-[8px] font-black uppercase tracking-[0.2em]">COMPLETADO</span>
+                              </div>
+                           )}
+                           {activity.video_url && (
+                              <div className="flex items-center gap-1 text-zinc-400">
+                                 <Play className="h-2.5 w-2.5 fill-current" />
+                                 <span className="text-[8px] font-black uppercase tracking-[0.2em]">VIDEO GUÍA</span>
+                              </div>
+                           )}
+                        </div>
                      </div>
                      <h4 className="text-xl font-black font-outfit text-zinc-900 dark:text-zinc-50 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
                         {activity.title}
