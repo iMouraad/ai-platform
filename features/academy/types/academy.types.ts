@@ -1,5 +1,5 @@
 export type ActivityType = 'simulate_ai' | 'improve_prompt' | 'compare_responses' | 'build_prompt';
-export type ActivityLevel = 'basic' | 'intermediate' | 'advanced';
+export type ActivityLevel = 'basic' | 'intermediate' | 'advanced' | 'expert' | 'master';
 export type ActivityStatus = 'draft' | 'published' | 'archived';
 
 export interface Activity {

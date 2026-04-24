@@ -64,8 +64,8 @@ export const RegisterForm = () => {
             Hemos enviado un enlace de activación a tu correo. Por favor, revísalo para completar tu cuenta.
           </p>
         </div>
-        <Link 
-          href="/" 
+        <Link
+          href="/"
           className="px-10 py-5 bg-blue-600 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-blue-600/30 hover:scale-105 active:scale-95 transition-all"
         >
           Volver al inicio
@@ -86,26 +86,6 @@ export const RegisterForm = () => {
       </div>
 
       <div className="max-w-[600px] mx-auto w-full space-y-8">
-        <button 
-          type="button"
-          onClick={handleGoogleLogin}
-          className="w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all flex items-center justify-center gap-4 group bg-white dark:bg-zinc-950 shadow-xl shadow-blue-500/5"
-        >
-          <svg className="h-5 w-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-2 5.12-7.84 5.12-5.08 0-9.2-4.24-9.2-9.2s4.12-9.2 9.2-9.2c2.8 0 4.72 1.16 5.8 2.2l2.6-2.6C19.12 1.68 15.96.68 12.48.68 5.84.68.48 6.04.48 12.68s5.36 12 12 12c6.88 0 11.44-4.84 11.44-11.64 0-.8-.08-1.4-.24-2.12h-11.2z" />
-          </svg>
-          Registrarme con Google
-        </button>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-zinc-100 dark:border-zinc-800" />
-          </div>
-          <div className="relative flex justify-center text-[8px] uppercase font-black tracking-[0.5em]">
-            <span className="bg-zinc-50 dark:bg-zinc-950 px-5 text-zinc-400">O mediante formulario</span>
-          </div>
-        </div>
-
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 bg-white dark:bg-zinc-950 p-7 md:p-8 rounded-[2.5rem] border border-zinc-100 dark:border-zinc-800 shadow-2xl shadow-blue-500/5">
           <div className="flex flex-col gap-1.5">
             <label className="text-[9px] font-black text-zinc-400 uppercase tracking-[0.3em] ml-1">Primer Nombre</label>
@@ -195,7 +175,7 @@ export const RegisterForm = () => {
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Crear mi cuenta gratuita"}
               </span>
             </button>
-            
+
             <p className="mt-6 text-center text-[9px] font-black uppercase tracking-widest text-zinc-400">
               ¿Ya tienes cuenta? <Link href="/login" className="text-blue-600 hover:text-blue-700 ml-2">Inicia sesión aquí</Link>
             </p>

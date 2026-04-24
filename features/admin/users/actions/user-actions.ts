@@ -1,12 +1,11 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function updateUserRole(profileId: string, newRole: 'student' | 'instructor' | 'admin') {
+export async function updateUserRole(profileId: string, newRole: 'student' | 'student_premium' | 'instructor' | 'admin') {
   const supabase = await createClient();
 
-  // Security check: Only admins can change roles
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autorizado");
 
@@ -21,10 +20,20 @@ export async function updateUserRole(profileId: string, newRole: 'student' | 'in
     throw new Error("No tienes permisos de administrador");
   }
 
-  const { error } = await supabase
+  const updateData: any = { 
+    role: newRole, 
+    updated_at: new Date().toISOString() 
+  };
+
+  if (newRole === 'student_premium') {
+    updateData.premium_at = new Date().toISOString();
+  }
+
+  const adminClient = await createAdminClient();
+  const { error } = await adminClient
     .schema("accounts")
     .from("profiles")
-    .update({ role: newRole, updated_at: new Error().stack?.includes('updateUserRole') ? new Date().toISOString() : new Date().toISOString() })
+    .update(updateData)
     .eq("id", profileId);
 
   if (error) {
@@ -39,7 +48,6 @@ export async function updateUserRole(profileId: string, newRole: 'student' | 'in
 export async function toggleUserStatus(profileId: string, currentStatus: boolean) {
   const supabase = await createClient();
 
-  // Security check
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("No autorizado");
 
@@ -54,7 +62,8 @@ export async function toggleUserStatus(profileId: string, currentStatus: boolean
     throw new Error("No tienes permisos de administrador");
   }
 
-  const { error } = await supabase
+  const adminClient = await createAdminClient();
+  const { error } = await adminClient
     .schema("accounts")
     .from("profiles")
     .update({ is_active: !currentStatus, updated_at: new Date().toISOString() })

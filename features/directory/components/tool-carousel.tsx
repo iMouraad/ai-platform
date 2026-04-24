@@ -112,12 +112,12 @@ export const ToolCarousel = ({
   if (tools.length === 0) return null;
 
   return (
-    <div className="w-full space-y-12 mb-32 relative group/carousel">
+    <div className="w-full space-y-12 mb-32 relative group/carousel" suppressHydrationWarning>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 px-4">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-             <div className="h-2 w-10 bg-blue-600 rounded-full" />
+             <div className="h-2 w-10 bg-blue-600 rounded-full" suppressHydrationWarning />
              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400">HUB PDIA</span>
           </div>
           <h2 className="text-5xl md:text-6xl font-black font-outfit tracking-tighter text-zinc-900 dark:text-zinc-50 uppercase leading-none">

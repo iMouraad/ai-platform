@@ -4,7 +4,7 @@ import crypto from "crypto";
 
 export async function GET() {
   const adminSupabase = await createAdminClient();
-  
+
   const email = "admin@admin.com";
   const password = "admin123";
   const username = "admin";
@@ -50,7 +50,7 @@ export async function GET() {
       return NextResponse.json({ error: profileError.message }, { status: 400 });
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "¡Usuario Admin creado con éxito!",
       email: email,
       password: password,

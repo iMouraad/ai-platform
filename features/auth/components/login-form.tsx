@@ -77,36 +77,36 @@ export const LoginForm = () => {
           </div>
 
           <div className="flex flex-col gap-2">
-             <div className="flex justify-between items-center px-1">
-               <label htmlFor="password" className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">Contraseña</label>
-               <Link href="/forgot-password" title="¿Olvidaste tu contraseña?" className="text-[9px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest">
-                 ¿Olvidaste tu contraseña?
-               </Link>
-             </div>
-             <div className="relative">
-               <input
-                 {...register("password")}
-                 id="password"
-                 type={showPassword ? "text" : "password"}
-                 placeholder="••••••••"
-                 className={`flex h-14 w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-5 pr-14 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.password ? 'border-red-500/50 bg-red-500/5' : ''}`}
-               />
-               <button
-                 type="button"
-                 onClick={() => setShowPassword(!showPassword)}
-                 className="absolute right-5 top-4 text-zinc-400 hover:text-blue-600 transition-colors"
-               >
-                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-               </button>
-             </div>
-             {errors.password && <span className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1 mt-1">{errors.password.message}</span>}
+            <div className="flex justify-between items-center px-1">
+              <label htmlFor="password" className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">Contraseña</label>
+              <Link href="/forgot-password" title="¿Olvidaste tu contraseña?" className="text-[9px] font-black text-blue-600 hover:text-blue-700 uppercase tracking-widest">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
+            <div className="relative">
+              <input
+                {...register("password")}
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                className={`flex h-14 w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 px-5 pr-14 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.password ? 'border-red-500/50 bg-red-500/5' : ''}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-5 top-4 text-zinc-400 hover:text-blue-600 transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            {errors.password && <span className="text-[10px] font-black text-red-500 uppercase tracking-widest ml-1 mt-1">{errors.password.message}</span>}
           </div>
 
           {error && (
-             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-xs font-black uppercase tracking-widest animate-in slide-in-from-top-2">
-               <AlertCircle className="h-4 w-4 shrink-0" />
-               {error}
-             </div>
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-xs font-black uppercase tracking-widest animate-in slide-in-from-top-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
           )}
 
           <button
@@ -130,7 +130,7 @@ export const LoginForm = () => {
           </div>
         </div>
 
-        <button 
+        <button
           type="button"
           onClick={handleGoogleLogin}
           className="w-full h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-all flex items-center justify-center gap-4 group"
